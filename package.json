@@ -1,0 +1,19 @@
+{
+  "name": "coin_size",
+  "version": "1.0.0",
+  "description": "檢查 coin szie 的 denom 是否在範圍內",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com-chiisen:chiisen/coin_size.git"
+  },
+  "author": "Sam",
+  "license": "MIT",
+  "dependencies": {
+    "cli-color": "^2.0.3",
+    "node-xlsx": "^0.21.0"
+  }
+}

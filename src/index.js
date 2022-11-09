@@ -6,15 +6,20 @@ const { initGameMinBet } = require("./gameMinBet")
 const { initSingleMinBet } = require("./minBet")
 
 const { output } = require("./output")
+const { coinSize } = require("./coinSize")
 
-initGameDenomBetGold()
+const excelOutputFileName = "./output/coin_size.xlsx"
 
-initGameDenomBetGoldSetting()
+//initGameDenomBetGold()
 
-initGameMinBet()
+//initGameDenomBetGoldSetting()
 
-initSingleMinBet()
+//initGameMinBet()
 
-output()
+//initSingleMinBet()
+
+//output()
+
+coinSize(excelOutputFileName)
 
 console.log(clc.red("coin_size 程式結束!"))

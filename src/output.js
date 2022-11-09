@@ -11,7 +11,12 @@ const {
 
 const { data, convert } = require("58-toolkit")
 const { denomIndexToDenomString } = data
-const { convertExcelToDenomList, convertExcelToExcelDenomList, convertListToDenomString, convertListToDenomConvertString } = convert
+const {
+  convertExcelToDenomList,
+  convertExcelToExcelDenomList,
+  convertListToDenomString,
+  convertListToDenomConvertString,
+} = convert
 
 /**
  *

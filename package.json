@@ -2,7 +2,7 @@
   "name": "coin_size",
   "version": "1.0.0",
   "description": "檢查 coin szie 的 denom 是否在範圍內",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,6 +13,7 @@
   "author": "Sam",
   "license": "MIT",
   "dependencies": {
+    "58-toolkit": "file:../58-toolkit.js",
     "cli-color": "^2.0.3",
     "node-xlsx": "^0.21.0"
   }

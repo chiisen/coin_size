@@ -6,6 +6,7 @@ const { writeMultiplePagesExcel } = excel
 const { convertExcelToDenomConvertString } = convert
 
 const { minBetToExcelDenomListMap } = require("./minBet")
+const { currencyExchangeRateMap } = require("./currencyExchangeRate")
 
 const minBetList = [1, 3, 5, 9, 10, 15, 20, 25, 30, 40, 50, 88]
 
@@ -18,7 +19,16 @@ const betLevelList = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 /**
  *
  */
-function coinSize(excelOutputFileName) {
+function coinSize() {
+  currencyExchangeRateMap.forEach((v, k) => {
+    subCoinSize(k, v)
+  })
+}
+
+/**
+ *
+ */
+function subCoinSize(currency, cryDef) {
   const allCoinSize_ = []
 
   let id_ = 1
@@ -32,7 +42,7 @@ function coinSize(excelOutputFileName) {
         /**
          * @note 0.001743 為後台KBB匯率的倒數
          */
-        const currencyExchangeRate = 0.001743
+        const currencyExchangeRate = 1 / cryDef
 
         /**
          * Debby 叫 betGold_ 為 coin size
@@ -76,86 +86,105 @@ function coinSize(excelOutputFileName) {
     })
   })
 
-  outputExcel(excelOutputFileName, allCoinSize_)
+  outputExcel(allCoinSize_, currency)
 }
-
-const excelDataMap = new Map([
-  [1, []],
-  [3, []],
-  [5, []],
-  [9, []],
-  [10, []],
-  [15, []],
-  [20, []],
-  [25, []],
-  [30, []],
-  [40, []],
-  [50, []],
-  [88, []],
-])
 
 /**
  * 寫入 Excel
- * @param {*} excelOutputFileName
  * @param {*} allCoinSize
  */
-function outputExcel(excelOutputFileName, allCoinSize) {
-  const sheetName = `coin_size`
+function outputExcel(allCoinSize, currency) {
+  /**
+   * 所有 minBet 在 1 到 88 頁籤上的初始化
+   */
+  const excelMinBetDataMap = new Map([
+    [1, []],
+    [3, []],
+    [5, []],
+    [9, []],
+    [10, []],
+    [15, []],
+    [20, []],
+    [25, []],
+    [30, []],
+    [40, []],
+    [50, []],
+    [88, []],
+  ])
+
+  const sheetName = `all`
 
   let buff = []
 
-  const excelData = []
+  /**
+   * 所有的 minBet 在一頁籤上
+   */
+  const excelAllMinBetData = []
 
-  excelData.push(["id", "minBet", "denomIndex", "denomString", "denomRatio", "betLevel", "betGold", "CNY", "Rate"])
+  excelAllMinBetData.push(["id", "minBet", "denomIndex", "denomString", "denomRatio", "betLevel", "betGold", "CNY", "Rate"])
 
-  excelDataMap.forEach((v, k) => {
+  excelMinBetDataMap.forEach((v, k) => {
     v.push(["id", "minBet", "denomIndex", "denomString", "denomRatio", "betLevel", "betGold", "CNY", "Rate"])
   })
 
+  let isOK_ = true
+
   allCoinSize.forEach((x) => {
-    excelData.push([x.id, x.minBet, x.denomIndex, x.denomString, x.denomRatio, x.betLevel, x.betGold, x.CNY, x.Rate])
+    excelAllMinBetData.push([x.id, x.minBet, x.denomIndex, x.denomString, x.denomRatio, x.betLevel, x.betGold, x.CNY, x.Rate])
 
-    excelDataMap.forEach((v, k) => {
-      if (k === x.minBet && x.reasonableValue) {
-        const currency_ = "KBB"
-        const keyMinBetIdCurrency_ = `${x.minBet}-${currency_}`
+    excelMinBetDataMap.forEach((v, k) => {
+      if (k === x.minBet && x.reasonableValue && isOK_ === true) {
+        const keyMinBetIdCurrency_ = `${x.minBet}-${currency}`
         const excelDenomList_ = minBetToExcelDenomListMap.get(keyMinBetIdCurrency_)
-        const denomString_ = convertExcelToDenomConvertString(excelDenomList_)
+        if (!excelDenomList_) {
+          console.log(clc.red(`${keyMinBetIdCurrency_} not found`))
 
-        let msg_ = ``
-        const isOK_ = excelDenomList_.includes(x.denomIndex)
-        if (!isOK_) {
-          msg_ = `minBet: ${x.minBet} denomIndex: ${x.denomIndex} denomString: ${x.denomString} [${denomString_}]`
-          console.error(msg_)
+          isOK_ = false
         } else {
-          v.push([
-            x.id,
-            x.minBet,
-            x.denomIndex,
-            x.denomString,
-            x.denomRatio,
-            x.betLevel,
-            x.betGold,
-            x.CNY.toFixed(2),
-            x.Rate.toFixed(2),
-            msg_,
-          ])
+          const denomString_ = convertExcelToDenomConvertString(excelDenomList_)
+
+          let msg_ = ``
+          const isIncludes_ = excelDenomList_.includes(x.denomIndex)
+          if (!isIncludes_) {
+            msg_ =
+              clc.yellow(`currency: ${currency} minBet: ${x.minBet} `) +
+              clc.red(`denomString: ${x.denomString}`) +
+              "\n" +
+              clc.blue(`denomIndex: ${x.denomIndex} denomRatio: ${x.denomRatio}`) +
+              clc.green(`[minBet denom: ${denomString_}]`)
+            console.log(msg_)
+          } else {
+            v.push([
+              x.id,
+              x.minBet,
+              x.denomIndex,
+              x.denomString,
+              x.denomRatio,
+              x.betLevel,
+              x.betGold,
+              x.CNY.toFixed(2),
+              x.Rate.toFixed(2),
+              msg_,
+            ])
+          }
         }
       }
     })
   })
 
-  let oneSheetData = { name: `.${sheetName}`, data: [...excelData] }
-
-  buff.push(oneSheetData)
-
-  excelDataMap.forEach((v, k) => {
-    let oneSheetData = { name: `.${k}`, data: [...v] }
+  if (isOK_) {
+    let oneSheetData = { name: `.${sheetName}`, data: [...excelAllMinBetData] }
 
     buff.push(oneSheetData)
-  })
 
-  writeMultiplePagesExcel(excelOutputFileName, buff)
+    excelMinBetDataMap.forEach((v, k) => {
+      let oneSheetData = { name: `.${k}`, data: [...v] }
+
+      buff.push(oneSheetData)
+    })
+
+    writeMultiplePagesExcel(`./output/coin_size_${currency}.xlsx`, buff)
+  }
 }
 
 module.exports = { coinSize }

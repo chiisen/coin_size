@@ -121,25 +121,50 @@ function outputExcel(allCoinSize, currency) {
    */
   const excelAllMinBetData = []
 
-  excelAllMinBetData.push(["id", "minBet", "denomIndex", "denomString", "denomRatio", "betLevel", "betGold", "CNY", "Rate"])
+  /**
+   * 寫入標題
+   */
+  const title_ = ["id", "minBet", "denomIndex", "denomString", "denomRatio", "betLevel", "betGold", "CNY", "Rate"]
 
+  //寫入標題到所有的 minBet 在一頁籤上
+  excelAllMinBetData.push(title_)
+
+  //寫入標題到所有 minBet 在 1 到 88 頁籤上
   excelMinBetDataMap.forEach((v, k) => {
-    v.push(["id", "minBet", "denomIndex", "denomString", "denomRatio", "betLevel", "betGold", "CNY", "Rate"])
+    v.push(title_)
   })
 
-  let isOK_ = true
+  /**
+   * 如果為 false 將不會存檔
+   */
+  let isSuccess_ = true
+
+  /**
+   * 是否開啟顯示錯誤錯誤 log
+   */
+  const isLogErrorMsg_ = false
 
   allCoinSize.forEach((x) => {
-    excelAllMinBetData.push([x.id, x.minBet, x.denomIndex, x.denomString, x.denomRatio, x.betLevel, x.betGold, x.CNY, x.Rate])
+    excelAllMinBetData.push([
+      x.id,
+      x.minBet,
+      x.denomIndex,
+      x.denomString,
+      x.denomRatio,
+      x.betLevel,
+      x.betGold,
+      x.CNY,
+      x.Rate,
+    ])
 
     excelMinBetDataMap.forEach((v, k) => {
-      if (k === x.minBet && x.reasonableValue && isOK_ === true) {
+      if (k === x.minBet && x.reasonableValue && isSuccess_ === true) {
         const keyMinBetIdCurrency_ = `${x.minBet}-${currency}`
         const excelDenomList_ = minBetToExcelDenomListMap.get(keyMinBetIdCurrency_)
         if (!excelDenomList_) {
           console.log(clc.red(`${keyMinBetIdCurrency_} not found`))
 
-          isOK_ = false
+          isSuccess_ = false
         } else {
           const denomString_ = convertExcelToDenomConvertString(excelDenomList_)
 
@@ -148,11 +173,15 @@ function outputExcel(allCoinSize, currency) {
           if (!isIncludes_) {
             msg_ =
               clc.yellow(`currency: ${currency} minBet: ${x.minBet} `) +
+              "\n" +
               clc.red(`denomString: ${x.denomString}`) +
               "\n" +
-              clc.blue(`denomIndex: ${x.denomIndex} denomRatio: ${x.denomRatio}`) +
-              clc.green(`[minBet denom: ${denomString_}]`)
-            console.log(msg_)
+              clc.blue(`denomIndex: ${x.denomIndex} denomRatio: ${x.denomRatio} `) +
+              clc.green(`not includes [minBet denom: ${denomString_}]`)
+
+            if (isLogErrorMsg_) {
+              console.log(msg_)
+            }
           } else {
             v.push([
               x.id,
@@ -172,7 +201,7 @@ function outputExcel(allCoinSize, currency) {
     })
   })
 
-  if (isOK_) {
+  if (isSuccess_) {
     let oneSheetData = { name: `.${sheetName}`, data: [...excelAllMinBetData] }
 
     buff.push(oneSheetData)

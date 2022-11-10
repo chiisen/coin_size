@@ -16,7 +16,7 @@ const excelOutputFileName = "./output/coin_size.xlsx"
 
 //initGameMinBet()
 
-//initSingleMinBet()
+initSingleMinBet()
 
 //output()
 

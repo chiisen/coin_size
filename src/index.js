@@ -5,6 +5,7 @@ const { initGameDenomBetGoldSetting } = require("./gameDenomBetGoldSetting")
 const { initGameMinBet } = require("./gameMinBet")
 const { initSingleMinBet } = require("./minBet")
 const { initCurrencyExchangeRate } = require("./currencyExchangeRate")
+const { initMaxDenom } = require("./maxDenom")
 
 const { output } = require("./output")
 const { coinSize } = require("./coinSize")
@@ -18,6 +19,8 @@ const { coinSize } = require("./coinSize")
 initSingleMinBet()
 
 initCurrencyExchangeRate()
+
+initMaxDenom()
 
 //output()
 

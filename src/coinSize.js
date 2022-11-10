@@ -3,10 +3,11 @@ const clc = require("cli-color")
 const { data, excel, convert } = require("58-toolkit")
 const { denomIndexToDenomString, denomStringToDenomRatio } = data
 const { writeMultiplePagesExcel } = excel
-const { convertExcelToDenomConvertString } = convert
+const { convertExcelToDenomList, convertListToDenomString } = convert
 
 const { minBetToExcelDenomListMap } = require("./minBet")
 const { currencyExchangeRateMap } = require("./currencyExchangeRate")
+const { maxDenomMap } = require("./maxDenom")
 
 const minBetList = [1, 3, 5, 9, 10, 15, 20, 25, 30, 40, 50, 88]
 
@@ -142,7 +143,12 @@ function outputExcel(allCoinSize, currency) {
   /**
    * 是否開啟顯示錯誤錯誤 log
    */
-  const isLogErrorMsg_ = false
+  const isLogErrorMsg_ = true
+
+  /**
+   * 是否開啟最大範圍的 denom，會有超出範圍的問題
+   */
+  const isIncludesAll_ = true
 
   allCoinSize.forEach((x) => {
     excelAllMinBetData.push([
@@ -161,15 +167,27 @@ function outputExcel(allCoinSize, currency) {
       if (k === x.minBet && x.reasonableValue && isSuccess_ === true) {
         const keyMinBetIdCurrency_ = `${x.minBet}-${currency}`
         const excelDenomList_ = minBetToExcelDenomListMap.get(keyMinBetIdCurrency_)
-        if (!excelDenomList_) {
+        const minBetDenomList_ = convertExcelToDenomList(excelDenomList_)
+        const maxDenomList_ = maxDenomMap.get(currency)
+
+        let includesDenomList_
+        if (isIncludesAll_) {
+          includesDenomList_ = maxDenomList_
+          console.log(clc.yellow(`目前使用最大的minBet`))
+        } else {
+          includesDenomList_ = minBetDenomList_
+          console.log(clc.yellow(`目前使用對應的minBet`))
+        }
+
+        if (!includesDenomList_) {
           console.log(clc.red(`${keyMinBetIdCurrency_} not found`))
 
           isSuccess_ = false
         } else {
-          const denomString_ = convertExcelToDenomConvertString(excelDenomList_)
+          const denomString_ = convertListToDenomString(includesDenomList_)
 
           let msg_ = ``
-          const isIncludes_ = excelDenomList_.includes(x.denomIndex)
+          const isIncludes_ = includesDenomList_.includes(x.denomIndex)
           if (!isIncludes_) {
             msg_ =
               clc.yellow(`currency: ${currency} minBet: ${x.minBet} `) +
@@ -207,7 +225,10 @@ function outputExcel(allCoinSize, currency) {
     buff.push(oneSheetData)
 
     excelMinBetDataMap.forEach((v, k) => {
-      let oneSheetData = { name: `.${k}`, data: [...v] }
+      if (v.length < 10) {
+        console.error(`${currency}-${k} 太少可以選擇`)
+      }
+      let oneSheetData = { name: `.M${k}-C${v.length}`, data: [...v] }
 
       buff.push(oneSheetData)
     })

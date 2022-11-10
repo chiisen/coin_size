@@ -9,9 +9,9 @@ const currencyExchangeRateMap = new Map()
  * 取得所有匯率
  */
 function initCurrencyExchangeRate() {
-  const currencyExchangeRate_ = getExcel("./input/currency_exchange_rate.xlsx", false, "currency_exchange_rate")
+  const currencyExchangeRateSheet_ = getExcel("./input/currency_exchange_rate.xlsx", false, "currency_exchange_rate")
 
-  currencyExchangeRate_.forEach((row_) => {
+  currencyExchangeRateSheet_.forEach((row_) => {
     const exCurrency_ = row_[0]
     const cryDef_ = row_[1]
 

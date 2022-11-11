@@ -8,6 +8,7 @@ const { convertExcelToDenomList, convertListToDenomConvertString } = convert
 const { minBetToExcelDenomListMap } = require("./minBet")
 const { currencyExchangeRateMap } = require("./currencyExchangeRate")
 const { maxDenomMap } = require("./maxDenom")
+const { betGoldIdMap } = require("./gameDenomBetGold")
 
 const minBetList = [1, 3, 5, 9, 10, 15, 20, 25, 30, 40, 50, 88]
 
@@ -32,7 +33,7 @@ function coinSize() {
 function subCoinSize(currency, cryDef) {
   const allCoinSize_ = []
 
-  let id_ = 1
+  let isSuccess_ = true
 
   denomIndexList.forEach((denomIndex_) => {
     betLevelList.forEach((betLevel_) => {
@@ -52,13 +53,25 @@ function subCoinSize(currency, cryDef) {
 
         /**
          * CNY 要大於1(符合成本)
+         * PS.舊表(minBet denom) 限制是 0.6 CNY
          */
         const cny_ = betGold_ * currencyExchangeRate
 
         /**
-         * Rate 大於1小於200
+         * Rate 大於1倍小於200倍
+         * PS.Debby說200是CNY不是倍數，所以Rate欄位可以忽視嗎?
          */
         const rate_ = cny_ / minBet_
+
+        /**
+         * 除 minBet 的倍數
+         */
+        const rateHigh_ = 200
+
+        /**
+         * 除 minBet 的倍數
+         */
+        const rateLow_ = 1
 
         /**
          * 是否在合理範圍
@@ -70,19 +83,46 @@ function subCoinSize(currency, cryDef) {
          */
         let unreasonableReason_ = ""
 
-        if (cny_ >= 1 && rate_ >= 1 && rate_ <= 200) {
+        /**
+         * 下注一筆的成本 debby say 0.6 vs. 文煒 say 1
+         */
+        const cnyLow_ = 0.6
+
+        /**
+         * 下注一筆的最高成本 200
+         */
+        const cnyHigh_ = 200
+
+        if (cny_ >= cnyLow_ && rate_ >= 1 && rate_ <= cnyHigh_) {
           reasonableValue_ = true
         } else {
-          if (cny_ < 1) {
-            unreasonableReason_ += "CNY小於1,"
+          if (cny_ < cnyLow_) {
+            unreasonableReason_ += `CNY小於${cnyLow_},\n`
           }
-          if (rate_ < 1) {
-            unreasonableReason_ += "Rate小於1,"
+          if (rate_ < rateLow_) {
+            unreasonableReason_ += `Rate小於${rateLow_}倍,\n`
           }
-          if (rate_ > 200) {
-            unreasonableReason_ += "Rate大於200,"
+          if (rate_ > rateHigh_) {
+            unreasonableReason_ += `Rate大於${rateHigh_}倍,\n`
           }
         }
+
+        /**
+         * minBet denom 中計算出來的 CNY
+         */
+        const minBetDenomCNY_ = (minBet_ * betLevel_ * denomRatio_) / cryDef
+
+        const key_ = `${minBet_}-${denomIndex_}-${betLevel_}`
+        const id_ = betGoldIdMap.get(key_)
+
+        const keyMinBetIdCurrency_ = `${minBet_}-${currency}`
+        const excelDenomList_ = minBetToExcelDenomListMap.get(keyMinBetIdCurrency_)
+        if (!excelDenomList_) {
+          isSuccess_ = false
+          return
+        }
+        const minBetDenomList_ = convertExcelToDenomList(excelDenomList_)
+        const minBetDenomListString_ = convertListToDenomConvertString(minBetDenomList_)
 
         allCoinSize_.push({
           id: id_,
@@ -97,14 +137,16 @@ function subCoinSize(currency, cryDef) {
           reasonableValue: reasonableValue_,
           unreasonableReason: unreasonableReason_,
           cryDef: cryDef,
+          minBetDenomCNY: minBetDenomCNY_,
+          minBetDenomListString: minBetDenomListString_,
         })
-
-        id_ += 1
       })
     })
   })
 
-  outputExcel(allCoinSize_, currency)
+  if (isSuccess_) {
+    outputExcel(allCoinSize_, currency)
+  }
 }
 
 /**
@@ -149,12 +191,13 @@ function outputExcel(allCoinSize, currency) {
     "denomString",
     "denomRatio",
     "betLevel",
-    "betGold",
+    "betGold\n(要大於小數兩位，\n後台才能顯示)",
     "CNY",
     "Rate",
     "reasonableValue",
     "unreasonableReason",
-    "minBetDenom比率(0.6~200)",
+    "minBetDenom\n(CNY要在0.6~200)",
+    "minBetDenomListString",
   ]
 
   //寫入標題到所有的 minBet 在一頁籤上
@@ -198,6 +241,8 @@ function outputExcel(allCoinSize, currency) {
       x.Rate,
       x.reasonableValue,
       x.unreasonableReason,
+      x.minBetDenomCNY,
+      x.minBetDenomListString,
     ])
 
     excelMinBetDataMap.forEach((v, k) => {
@@ -283,10 +328,6 @@ function includesCheck(includesDenomList_, currency, x, v, isLogErrorMsg) {
       console.log(msg_)
     } else {
       //msg_ = `currency: ${currency} minBet: ${x.minBet} denomString: ${x.denomString} denomIndex: ${x.denomIndex} denomRatio: ${x.denomRatio} not includes [minBet denom: ${denomString_}]`
-      //@note 計算 minBet 是否在合理範圍
-      const minBetDenomRatio_ = (x.minBet * x.betLevel * x.denomRatio) / x.cryDef
-      //msg_ = `(minBet: ${x.minBet} ✖ betLevel: ${x.betLevel} ✖ denom: ${x.denomString}) ➗ ${x.cryDef} = ${minBetDenomRatio_.toFixed(6)} `
-      msg_ = `${minBetDenomRatio_.toFixed(2)} `
     }
   } else {
     //不範圍內的 denom 處理
@@ -304,7 +345,8 @@ function includesCheck(includesDenomList_, currency, x, v, isLogErrorMsg) {
     x.Rate.toFixed(2),
     x.reasonableValue,
     x.unreasonableReason,
-    msg_,
+    x.minBetDenomCNY,
+    x.minBetDenomListString,
   ])
 }
 

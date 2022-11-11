@@ -10,7 +10,7 @@ const { initMaxDenom } = require("./maxDenom")
 const { output } = require("./output")
 const { coinSize } = require("./coinSize")
 
-//initGameDenomBetGold()
+initGameDenomBetGold()
 
 //initGameDenomBetGoldSetting()
 

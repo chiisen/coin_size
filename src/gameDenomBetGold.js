@@ -2,6 +2,7 @@ const { excel } = require("58-toolkit")
 const { getExcel } = excel
 
 const betGoldMap = new Map()
+const betGoldIdMap = new Map()
 
 /**
  *
@@ -25,8 +26,11 @@ function initGameDenomBetGold() {
         betGold: betGold_,
       }
       betGoldMap.set(id_, data_)
+
+      const key_ = `${minBet_}-${denomId_}-${betLevel_}`
+      betGoldIdMap.set(key_, id_)
     }
   })
 }
 
-module.exports = { initGameDenomBetGold, betGoldMap }
+module.exports = { initGameDenomBetGold, betGoldMap, betGoldIdMap }

@@ -3,7 +3,7 @@ const clc = require("cli-color")
 const { data, excel, convert } = require("58-toolkit")
 const { denomIndexToDenomString, denomStringToDenomRatio } = data
 const { writeMultiplePagesExcel } = excel
-const { convertExcelToDenomList, convertListToDenomString } = convert
+const { convertExcelToDenomList, convertListToDenomConvertString } = convert
 
 const { minBetToExcelDenomListMap } = require("./minBet")
 const { currencyExchangeRateMap } = require("./currencyExchangeRate")
@@ -65,8 +65,23 @@ function subCoinSize(currency, cryDef) {
          */
         let reasonableValue_ = false
 
+        /**
+         * 不合理的原因
+         */
+        let unreasonableReason_ = ""
+
         if (cny_ >= 1 && rate_ >= 1 && rate_ <= 200) {
           reasonableValue_ = true
+        } else {
+          if (cny_ < 1) {
+            unreasonableReason_ += "CNY小於1,"
+          }
+          if (rate_ < 1) {
+            unreasonableReason_ += "Rate小於1,"
+          }
+          if (rate_ > 200) {
+            unreasonableReason_ += "Rate大於200,"
+          }
         }
 
         allCoinSize_.push({
@@ -80,6 +95,8 @@ function subCoinSize(currency, cryDef) {
           CNY: cny_,
           Rate: rate_,
           reasonableValue: reasonableValue_,
+          unreasonableReason: unreasonableReason_,
+          cryDef: cryDef,
         })
 
         id_ += 1
@@ -125,7 +142,20 @@ function outputExcel(allCoinSize, currency) {
   /**
    * 寫入標題
    */
-  const title_ = ["id", "minBet", "denomIndex", "denomString", "denomRatio", "betLevel", "betGold", "CNY", "Rate"]
+  const title_ = [
+    "id",
+    "minBet",
+    "denomIndex",
+    "denomString",
+    "denomRatio",
+    "betLevel",
+    "betGold",
+    "CNY",
+    "Rate",
+    "reasonableValue",
+    "unreasonableReason",
+    "minBetDenom比率(0.6~200)",
+  ]
 
   //寫入標題到所有的 minBet 在一頁籤上
   excelAllMinBetData.push(title_)
@@ -143,12 +173,17 @@ function outputExcel(allCoinSize, currency) {
   /**
    * 是否開啟顯示錯誤錯誤 log
    */
-  const isLogErrorMsg_ = true
+  const isLogErrorMsg_ = false
+
+  /**
+   * 是否排除不合理值
+   */
+  const excludeUnreasonable_ = false
 
   /**
    * 是否開啟最大範圍的 denom，會有超出範圍的問題
    */
-  const isIncludesAll_ = true
+  const isIncludesAll_ = false
 
   allCoinSize.forEach((x) => {
     excelAllMinBetData.push([
@@ -161,58 +196,44 @@ function outputExcel(allCoinSize, currency) {
       x.betGold,
       x.CNY,
       x.Rate,
+      x.reasonableValue,
+      x.unreasonableReason,
     ])
 
     excelMinBetDataMap.forEach((v, k) => {
-      if (k === x.minBet && x.reasonableValue && isSuccess_ === true) {
-        const keyMinBetIdCurrency_ = `${x.minBet}-${currency}`
-        const excelDenomList_ = minBetToExcelDenomListMap.get(keyMinBetIdCurrency_)
-        const minBetDenomList_ = convertExcelToDenomList(excelDenomList_)
-        const maxDenomList_ = maxDenomMap.get(currency)
-
-        let includesDenomList_
-        if (isIncludesAll_) {
-          includesDenomList_ = maxDenomList_
-          console.log(clc.yellow(`目前使用最大的minBet`))
-        } else {
-          includesDenomList_ = minBetDenomList_
-          console.log(clc.yellow(`目前使用對應的minBet`))
-        }
-
-        if (!includesDenomList_) {
-          console.log(clc.red(`${keyMinBetIdCurrency_} not found`))
-
-          isSuccess_ = false
-        } else {
-          const denomString_ = convertListToDenomString(includesDenomList_)
-
-          let msg_ = ``
-          const isIncludes_ = includesDenomList_.includes(x.denomIndex)
-          if (!isIncludes_) {
-            msg_ =
-              clc.yellow(`currency: ${currency} minBet: ${x.minBet} `) +
-              "\n" +
-              clc.red(`denomString: ${x.denomString}`) +
-              "\n" +
-              clc.blue(`denomIndex: ${x.denomIndex} denomRatio: ${x.denomRatio} `) +
-              clc.green(`not includes [minBet denom: ${denomString_}]`)
-
-            if (isLogErrorMsg_) {
-              console.log(msg_)
+      if (isSuccess_) {
+        if (k === x.minBet) {
+          let isExcludeUnreasonable_ = false
+          if (excludeUnreasonable_) {
+            //是否排除不合理值
+            if (!x.reasonableValue) {
+              isExcludeUnreasonable_ = true
             }
-          } else {
-            v.push([
-              x.id,
-              x.minBet,
-              x.denomIndex,
-              x.denomString,
-              x.denomRatio,
-              x.betLevel,
-              x.betGold,
-              x.CNY.toFixed(2),
-              x.Rate.toFixed(2),
-              msg_,
-            ])
+          }
+
+          if (!isExcludeUnreasonable_) {
+            const keyMinBetIdCurrency_ = `${x.minBet}-${currency}`
+            const excelDenomList_ = minBetToExcelDenomListMap.get(keyMinBetIdCurrency_)
+            const minBetDenomList_ = convertExcelToDenomList(excelDenomList_)
+            const maxDenomList_ = maxDenomMap.get(currency)
+
+            let includesDenomList_
+            if (isIncludesAll_) {
+              includesDenomList_ = maxDenomList_
+              console.log(clc.yellow(`目前使用最大的minBet`))
+            } else {
+              includesDenomList_ = minBetDenomList_
+              console.log(clc.yellow(`目前使用對應的minBet`))
+            }
+
+            if (!includesDenomList_) {
+              console.log(clc.red(`${keyMinBetIdCurrency_} not found`))
+
+              isSuccess_ = false
+            } else {
+              //檢查 denom 是否有包含在內
+              includesCheck(includesDenomList_, currency, x, v, isLogErrorMsg_)
+            }
           }
         }
       }
@@ -226,7 +247,7 @@ function outputExcel(allCoinSize, currency) {
 
     excelMinBetDataMap.forEach((v, k) => {
       if (v.length < 10) {
-        console.error(`${currency}-${k} 太少可以選擇`)
+        console.error(`${currency}-${k} 不到 10 組可以選擇`)
       }
       let oneSheetData = { name: `.M${k}-C${v.length}`, data: [...v] }
 
@@ -235,6 +256,56 @@ function outputExcel(allCoinSize, currency) {
 
     writeMultiplePagesExcel(`./output/coin_size_${currency}.xlsx`, buff)
   }
+}
+
+/**
+ * 檢查 denom 是否有包含在內
+ *
+ * @param {*} includesDenomList_
+ * @param {*} x
+ */
+function includesCheck(includesDenomList_, currency, x, v, isLogErrorMsg) {
+  let msg_ = ``
+
+  const isIncludes_ = includesDenomList_.includes(x.denomIndex)
+  if (!isIncludes_) {
+    const denomString_ = convertListToDenomConvertString(includesDenomList_)
+
+    msg_ =
+      clc.yellow(`currency: ${currency} minBet: ${x.minBet} `) +
+      "\n" +
+      clc.red(`denomString: ${x.denomString}`) +
+      "\n" +
+      clc.blue(`denomIndex: ${x.denomIndex} denomRatio: ${x.denomRatio} `) +
+      clc.green(`not includes [minBet denom: ${denomString_}]`)
+
+    if (isLogErrorMsg) {
+      console.log(msg_)
+    } else {
+      //msg_ = `currency: ${currency} minBet: ${x.minBet} denomString: ${x.denomString} denomIndex: ${x.denomIndex} denomRatio: ${x.denomRatio} not includes [minBet denom: ${denomString_}]`
+      //@note 計算 minBet 是否在合理範圍
+      const minBetDenomRatio_ = (x.minBet * x.betLevel * x.denomRatio) / x.cryDef
+      //msg_ = `(minBet: ${x.minBet} ✖ betLevel: ${x.betLevel} ✖ denom: ${x.denomString}) ➗ ${x.cryDef} = ${minBetDenomRatio_.toFixed(6)} `
+      msg_ = `${minBetDenomRatio_.toFixed(2)} `
+    }
+  } else {
+    //不範圍內的 denom 處理
+  }
+
+  v.push([
+    x.id,
+    x.minBet,
+    x.denomIndex,
+    x.denomString,
+    x.denomRatio,
+    x.betLevel,
+    x.betGold,
+    x.CNY.toFixed(2),
+    x.Rate.toFixed(2),
+    x.reasonableValue,
+    x.unreasonableReason,
+    msg_,
+  ])
 }
 
 module.exports = { coinSize }

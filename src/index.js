@@ -9,7 +9,7 @@ const { initMaxDenom } = require("./maxDenom")
 
 const { output } = require("./output")
 const { coinSize } = require("./coinSize")
-const { initCoinSizeConvert, coinSizeConvertSQL } = require("./coinSizeConvert")
+const { coinSizeConvertSQL } = require("./coinSizeConvert")
 
 initGameDenomBetGold()
 
@@ -22,8 +22,6 @@ initGameDenomBetGold()
 //initCurrencyExchangeRate()
 
 //initMaxDenom()
-
-initCoinSizeConvert()
 
 //output()
 

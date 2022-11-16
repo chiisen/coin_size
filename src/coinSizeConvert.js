@@ -9,10 +9,11 @@ const { betGoldIdMap } = require("./gameDenomBetGold")
 
 const coinSizeConvertMap = new Map()
 
-function initCoinSizeConvert() {
-  const coinSizeConvertSheet_ = getExcel("./input/coinSize.xltm", false, "KBB")
+function initCoinSizeConvert(currency) {
+  const coinSizeConvertSheet_ = getExcel("./input/coinSize.xlsx", false, currency)
 
-  const currency_ = "KBB"
+  coinSizeConvertMap.clear()
+
   coinSizeConvertSheet_.forEach((row_) => {
     let refIndex_ = 0
     const offset_ = 3
@@ -24,7 +25,7 @@ function initCoinSizeConvert() {
       const cny_ = row_[cnyOffsetIndex_]
 
       if (isNumber(coinSize_)) {
-        const key_ = `${currency_}-${minBet_}`
+        const key_ = `${currency}-${minBet_}`
         const coinSizeValue_ = coinSizeConvertMap.get(key_)
         const addCoinSizeValue_ = {
           minBet: minBet_,
@@ -44,36 +45,10 @@ function initCoinSizeConvert() {
 }
 
 function coinSizeConvertSQL() {
-  const currency_ = "KBB"
-  let sql_ = `use game;`
-
-  coinSizeConvertMap.forEach((valueCoinSizeList_, key_) => {
-    const idList_ = []
-    valueCoinSizeList_.forEach((value_) => {
-      const cal_ = calCoinSzie(value_.coinSize, value_.minBet)
-      if (cal_) {
-        const keyBetGoldId_ = `${cal_.minBet}-${cal_.denomIndex}-${cal_.betLevel}`
-        const id_ = betGoldIdMap.get(keyBetGoldId_)
-        if (!id_) {
-          console.error(`無法配對 id: ${id_}`)
-        } else {
-          console.log(`minBet: ${value_.minBet} coinSize: ${value_.coinSize} id: ${id_}`)
-
-          idList_.push(id_)
-        }
-      } else {
-        console.error(`無法配對 minBet: ${value_.minBet}, coin size: ${value_.coinSize}`)
-      }
-    })
-
-    const idListString_ = convertListToDenomString(idList_)
-    const defaultId_ = idList_[1]
-
-    sql_ += `\n`
-    sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('你指定的AgentCid',171201,'${currency_}','你指定的groupKey','${idListString_}',${defaultId_});`
+  const currency_ = ["KBB", "CNY"]
+  currency_.forEach((curr_) => {
+    mainLoop(curr_)
   })
-
-  writeAlter("./output", sql_, `alter_${currency_}.sql`)
 }
 
 function calCoinSzie(coinSize, minBet) {
@@ -99,4 +74,38 @@ function calCoinSzie(coinSize, minBet) {
   return ret_
 }
 
-module.exports = { initCoinSizeConvert, coinSizeConvertSQL }
+function mainLoop(currency) {
+  initCoinSizeConvert(currency)
+
+  let sql_ = `use game;`
+
+  coinSizeConvertMap.forEach((valueCoinSizeList_, key_) => {
+    const idList_ = []
+    valueCoinSizeList_.forEach((value_) => {
+      const cal_ = calCoinSzie(value_.coinSize, value_.minBet)
+      if (cal_) {
+        const keyBetGoldId_ = `${cal_.minBet}-${cal_.denomIndex}-${cal_.betLevel}`
+        const id_ = betGoldIdMap.get(keyBetGoldId_)
+        if (!id_) {
+          console.error(`無法配對 id: ${id_}`)
+        } else {
+          console.log(`minBet: ${value_.minBet} coinSize: ${value_.coinSize} id: ${id_}`)
+
+          idList_.push(id_)
+        }
+      } else {
+        console.error(`無法配對 minBet: ${value_.minBet}, coin size: ${value_.coinSize}`)
+      }
+    })
+
+    const idListString_ = convertListToDenomString(idList_)
+    const defaultId_ = idList_[1]
+
+    sql_ += `\n`
+    sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('你指定的AgentCid',171201,'${currency}','你指定的groupKey','${idListString_}',${defaultId_});`
+  })
+
+  writeAlter("./output", sql_, `alter_${currency}.sql`)
+}
+
+module.exports = { coinSizeConvertSQL }

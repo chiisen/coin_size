@@ -13,7 +13,7 @@
   "author": "Sam",
   "license": "MIT",
   "dependencies": {
-    "58-toolkit": "file:../58-toolkit.js",
+    "58-toolkit": "^1.0.3",
     "cli-color": "^2.0.3",
     "node-xlsx": "^0.21.0"
   }

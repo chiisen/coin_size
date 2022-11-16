@@ -9,6 +9,7 @@ const { initMaxDenom } = require("./maxDenom")
 
 const { output } = require("./output")
 const { coinSize } = require("./coinSize")
+const { initCoinSizeConvert, coinSizeConvertSQL } = require("./coinSizeConvert")
 
 initGameDenomBetGold()
 
@@ -16,14 +17,18 @@ initGameDenomBetGold()
 
 //initGameMinBet()
 
-initSingleMinBet()
+//initSingleMinBet()
 
-initCurrencyExchangeRate()
+//initCurrencyExchangeRate()
 
-initMaxDenom()
+//initMaxDenom()
+
+initCoinSizeConvert()
 
 //output()
 
-coinSize()
+//coinSize()
+
+coinSizeConvertSQL()
 
 console.log(clc.red("coin_size 程式結束!"))

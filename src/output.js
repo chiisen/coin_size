@@ -3,20 +3,11 @@ const clc = require("cli-color")
 const { betGoldMap } = require("./gameDenomBetGold")
 const { betGoldSettingMap } = require("./gameDenomBetGoldSetting")
 const { gameMinBetMap } = require("./gameMinBet")
-const {
-  minBetToExcelDenomListMap,
-  minBetCurrencyToDefaultDenomIndexMap,
-  minBetCurrencyToDefaultDenomNthMap,
-} = require("./minBet")
+const { minBetToExcelDenomListMap } = require("./minBet")
 
 const { data, convert } = require("58-toolkit")
 const { denomIndexToDenomString } = data
-const {
-  convertExcelToDenomList,
-  convertExcelToExcelDenomList,
-  convertListToDenomString,
-  convertListToDenomConvertString,
-} = convert
+const { convertExcelToDenomList, convertListToDenomConvertString } = convert
 
 /**
  *

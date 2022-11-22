@@ -1,5 +1,3 @@
-const clc = require("cli-color")
-
 const { excel, convert } = require("58-toolkit")
 const { getExcel } = excel
 const { convertExcelToDenomList } = convert

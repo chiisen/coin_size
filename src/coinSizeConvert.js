@@ -1,14 +1,20 @@
 const { excel, helpers, data, file, convert } = require("58-toolkit")
 const { getExcel } = excel
-const { isNumber } = helpers
+const { isNumber, decimalPlacesLimit } = helpers
 const { minBetList, betLevelList, denomIndexList, denomIndexToDenomString, denomStringToDenomRatio } = data
-const { writeAlter } = file
+const { writeAlter, emptyDir } = file
 const { convertListToDenomString } = convert
 
 const { betGoldIdMap } = require("./gameDenomBetGold")
+const { currencyList } = require("./currency")
 
 const coinSizeConvertMap = new Map()
 
+/**
+ * 初始化 coin size 的設定表
+ *
+ * @param {string} currency 幣別
+ */
 function initCoinSizeConvert(currency) {
   const coinSizeConvertSheet_ = getExcel("./input/coinSize.xlsx", false, currency)
 
@@ -25,17 +31,21 @@ function initCoinSizeConvert(currency) {
       const cny_ = row_[cnyOffsetIndex_]
 
       if (isNumber(coinSize_)) {
-        const key_ = `${currency}-${minBet_}`
-        const coinSizeValue_ = coinSizeConvertMap.get(key_)
-        const addCoinSizeValue_ = {
-          minBet: minBet_,
-          coinSize: coinSize_,
-          CNY: cny_,
-        }
-        if (!coinSizeValue_) {
-          coinSizeConvertMap.set(key_, [addCoinSizeValue_])
+        if (coinSize_ != 0) {
+          const key_ = `${currency}-${minBet_}`
+          const coinSizeValue_ = coinSizeConvertMap.get(key_)
+          const addCoinSizeValue_ = {
+            minBet: minBet_,
+            coinSize: coinSize_,
+            CNY: cny_,
+          }
+          if (!coinSizeValue_) {
+            coinSizeConvertMap.set(key_, [addCoinSizeValue_])
+          } else {
+            coinSizeValue_.push(addCoinSizeValue_)
+          }
         } else {
-          coinSizeValue_.push(addCoinSizeValue_)
+          // 等於 coin size 零的忽略掉
         }
       }
 
@@ -44,9 +54,14 @@ function initCoinSizeConvert(currency) {
   })
 }
 
+/**
+ * 依據幣別產生所有的 coin size 的 SQL 腳本
+ */
 function coinSizeConvertSQL() {
-  const currency_ = ["KBB", "CNY"]
-  currency_.forEach((curr_) => {
+  //刪除所有檔案
+  emptyDir(`./output`)
+
+  currencyList.forEach((curr_) => {
     mainLoop(curr_)
   })
 }
@@ -82,19 +97,27 @@ function mainLoop(currency) {
   coinSizeConvertMap.forEach((valueCoinSizeList_, key_) => {
     const idList_ = []
     valueCoinSizeList_.forEach((value_) => {
+      if (decimalPlacesLimit(value_.coinSize, 2)) {
+        const msg_ = `💥超過小數點兩位 currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`
+        console.error(msg_)
+        //throw msg_
+      }
+
       const cal_ = calCoinSzie(value_.coinSize, value_.minBet)
       if (cal_) {
         const keyBetGoldId_ = `${cal_.minBet}-${cal_.denomIndex}-${cal_.betLevel}`
         const id_ = betGoldIdMap.get(keyBetGoldId_)
         if (!id_) {
-          console.error(`無法配對 id: ${id_}`)
+          console.error(
+            `無法取得 id: ${id_} currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`
+          )
         } else {
-          console.log(`minBet: ${value_.minBet} coinSize: ${value_.coinSize} id: ${id_}`)
+          //console.log(`minBet: ${value_.minBet} coinSize: ${value_.coinSize} id: ${id_}`)
 
           idList_.push(id_)
         }
       } else {
-        console.error(`無法配對 minBet: ${value_.minBet}, coin size: ${value_.coinSize}`)
+        //console.error(`🈲無法配對 currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`)
       }
     })
 

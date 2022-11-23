@@ -1,6 +1,7 @@
 const clc = require("cli-color")
 
 const { initGameDenomBetGold } = require("./gameDenomBetGold")
+const { checkGameDenomBetGold } = require("./checkGameDenomBetGold")
 const { initGameDenomBetGoldSetting } = require("./gameDenomBetGoldSetting")
 const { initGameMinBet } = require("./gameMinBet")
 const { initSingleMinBet } = require("./minBet")
@@ -31,5 +32,7 @@ initGameDenomBetGold()
 //coinSize()
 
 coinSizeConvertSQL()
+
+checkGameDenomBetGold()
 
 console.log(clc.red("coin_size 程式結束!"))

@@ -1,4 +1,6 @@
 const clc = require("cli-color")
+const { file } = require("58-toolkit")
+const { emptyDir } = file
 
 const { initGameDenomBetGold } = require("./gameDenomBetGold")
 const { checkGameDenomBetGold } = require("./checkGameDenomBetGold")
@@ -12,6 +14,9 @@ const { coinSizeConvertSQL } = require("./coinSizeConvert")
 const { output } = require("./output")
 const { coinSize } = require("./coinSize")
 const { initCurrency } = require("./currency")
+
+//刪除所有檔案
+emptyDir(`./output`)
 
 initCurrency()
 
@@ -31,8 +36,8 @@ initGameDenomBetGold()
 
 //coinSize()
 
-coinSizeConvertSQL()
-
 checkGameDenomBetGold()
+
+coinSizeConvertSQL()
 
 console.log(clc.red("coin_size 程式結束!"))

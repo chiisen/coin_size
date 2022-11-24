@@ -1,8 +1,10 @@
+const BN = require("bignumber.js")
+
 const { excel, helpers, data, file, convert } = require("58-toolkit")
 const { getExcel } = excel
 const { isNumber, decimalPlacesLimit } = helpers
 const { minBetList, betLevelList, denomIndexList, denomIndexToDenomString, denomStringToDenomRatio } = data
-const { writeAlter, emptyDir } = file
+const { writeAlter } = file
 const { convertListToDenomString } = convert
 
 const { betGoldIdMap } = require("./gameDenomBetGold")
@@ -32,6 +34,9 @@ function initCoinSizeConvert(currency) {
 
       if (isNumber(coinSize_)) {
         if (coinSize_ != 0) {
+          if(decimalPlacesLimit(coinSize_, 2)){
+            console.error(`currency: ${currency} minBet: ${minBet_} coinSize: ${coinSize_} 小於小數點兩位`)
+          }
           const key_ = `${currency}-${minBet_}`
           const coinSizeValue_ = coinSizeConvertMap.get(key_)
           const addCoinSizeValue_ = {
@@ -58,9 +63,6 @@ function initCoinSizeConvert(currency) {
  * 依據幣別產生所有的 coin size 的 SQL 腳本
  */
 function coinSizeConvertSQL() {
-  //刪除所有檔案
-  emptyDir(`./output`)
-
   currencyList.forEach((curr_) => {
     mainLoop(curr_)
   })
@@ -74,7 +76,7 @@ function calCoinSzie(coinSize, minBet) {
       if (!isFound_) {
         const denomString_ = denomIndexToDenomString(denomIndex_)
         const denomRatio_ = denomStringToDenomRatio(denomString_)
-        const calCoinSzie_ = minBet * betLevel_ * denomRatio_
+        const calCoinSzie_ = BN(minBet).times(denomRatio_).times(betLevel_).toNumber()
         if (calCoinSzie_ === coinSize) {
           ret_ = {
             minBet,
@@ -97,12 +99,6 @@ function mainLoop(currency) {
   coinSizeConvertMap.forEach((valueCoinSizeList_, key_) => {
     const idList_ = []
     valueCoinSizeList_.forEach((value_) => {
-      if (decimalPlacesLimit(value_.coinSize, 2)) {
-        const msg_ = `💥超過小數點兩位 currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`
-        console.error(msg_)
-        //throw msg_
-      }
-
       const cal_ = calCoinSzie(value_.coinSize, value_.minBet)
       if (cal_) {
         const keyBetGoldId_ = `${cal_.minBet}-${cal_.denomIndex}-${cal_.betLevel}`
@@ -117,7 +113,7 @@ function mainLoop(currency) {
           idList_.push(id_)
         }
       } else {
-        //console.error(`🈲無法配對 currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`)
+        console.error(`🈲無法配對 currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`)
       }
     })
 

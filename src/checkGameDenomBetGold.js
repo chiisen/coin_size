@@ -15,29 +15,21 @@ function checkGameDenomBetGold() {
   minBetList.forEach((minBet_) => {
     betLevelList.forEach((betLevel_) => {
       denomIndexList.forEach((denomIndex_) => {
-        const denomString_ = denomIndexToDenomString(denomIndex_)
-        const denomRatio_ = denomStringToDenomRatio(denomString_)
-        const betGold_ = minBet_ * denomRatio_ * betLevel_
-
         const key_ = `${minBet_}-${denomIndex_}-${betLevel_}`
         if (!betGoldIdMap.get(key_)) {
-          const checkBetGold_ = betGold_.toFixed(2)
-          if (checkBetGold_ != 0) {
-            const data_ = {
-              id: id_,
-              minBet: minBet_,
-              denomId: denomIndex_,
-              betLevel: betLevel_,
-              betGold: betGold_,
-            }
-            newBetGoldId_.push(data_)
-
-            id_ += 1
-          } else {
-            console.error(`💦minBet: ${minBet_}-denomIndex: ${denomIndex_}-betLevel: ${betLevel_} 的 coin size: ${betGold_} 小於小數點兩位`)
+          const denomString_ = denomIndexToDenomString(denomIndex_)
+          const denomRatio_ = denomStringToDenomRatio(denomString_)
+          const betGold_ = BN(minBet_).times(denomRatio_).times(betLevel_).toNumber()
+          const data_ = {
+            id: id_,
+            minBet: minBet_,
+            denomId: denomIndex_,
+            betLevel: betLevel_,
+            betGold: betGold_,
           }
+          newBetGoldId_.push(data_)
 
-          //console.error(`💦缺少組合: ${key_}`)
+          id_ += 1
         }
       })
     })
@@ -45,6 +37,9 @@ function checkGameDenomBetGold() {
 
   let sql_ = `use game;`
   newBetGoldId_.forEach((x) => {
+    const key_ = `${x.minBet}-${x.denomId}-${x.betLevel}`
+    //betGoldIdMap.set(key_, x.id) // @note 暫時改成不寫新增看看能不能組出來，目前看起來沒問題
+
     sql_ += `\n`
 
     sql_ += `INSERT INTO game_denom_bet_gold (id,minBet,denomId,betLevel,betGold) VALUES (${x.id},${x.minBet},${x.denomId},${x.betLevel},${x.betGold});`

@@ -13,7 +13,8 @@
   "author": "Sam",
   "license": "MIT",
   "dependencies": {
-    "58-toolkit": "^1.0.30",
+    "58-toolkit": "^1.0.32",
+    "bignumber.js": "^9.1.0",
     "cli-color": "^2.0.3",
     "node-xlsx": "^0.21.0"
   }

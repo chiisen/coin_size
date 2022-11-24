@@ -1,5 +1,6 @@
-const { excel } = require("58-toolkit")
+const { excel, helpers } = require("58-toolkit")
 const { getExcel } = excel
+const { decimalPlacesLimit } = helpers
 
 const betGoldMap = new Map() // 用 id 查 coin size 的設定
 const betGoldIdMap = new Map() // 用 coin size 的組合產生 key 值來查詢在資料庫中的 id

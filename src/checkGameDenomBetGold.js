@@ -44,7 +44,7 @@ function checkGameDenomBetGold() {
 
     sql_ += `INSERT INTO game_denom_bet_gold (id,minBet,denomId,betLevel,betGold) VALUES (${x.id},${x.minBet},${x.denomId},${x.betLevel},${x.betGold});`
   })
-  writeAlter("./output", sql_, `alter_diff.sql`)
+  writeAlter("./output", sql_, `diff.sql`)
 }
 
 module.exports = { checkGameDenomBetGold }

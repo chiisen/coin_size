@@ -121,7 +121,7 @@ function mainLoop(currency) {
     const defaultId_ = idList_[1]
 
     sql_ += `\n`
-    sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('你指定的AgentCid',171201,'${currency}','你指定的groupKey','${idListString_}',${defaultId_});`
+    sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('你指定的AgentCid',171201,'${currency}','','${idListString_}',${defaultId_});`
   })
 
   writeAlter("./output", sql_, `alter_${currency}.sql`)

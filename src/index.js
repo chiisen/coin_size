@@ -24,7 +24,7 @@ initGameDenomBetGold()
 
 //initGameDenomBetGoldSetting()
 
-//initGameMinBet()
+initGameMinBet()
 
 //initSingleMinBet()
 

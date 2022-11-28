@@ -1,5 +1,5 @@
 # coin_size
-檢查 coin szie 的 denom 是否在範圍內
+檢查 coin size 的 denom 是否在範圍內
 
 # 安裝本地套件
 ```bash=

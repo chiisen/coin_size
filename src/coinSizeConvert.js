@@ -130,10 +130,10 @@ function mainLoop(currency, agentCid) {
     const defaultId_ = idList_[1]
 
     sql_ += `\n`
-    sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','${idListString_}',${defaultId_});`
+    sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','${idListString_}',${defaultId_}) ON DUPLICATE KEY UPDATE premadeBetGoldIdList = '${idListString_}', defaultPremadeBetGoldId = ${defaultId_};`
 
     allSql_ += `\n`
-    allSql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','${idListString_}',${defaultId_});`
+    allSql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','${idListString_}',${defaultId_}) ON DUPLICATE KEY UPDATE premadeBetGoldIdList = '${idListString_}', defaultPremadeBetGoldId = ${defaultId_};`
   })
 
   writeAlter("./output", sql_, `alter_${currency}.sql`)

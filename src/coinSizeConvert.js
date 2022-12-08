@@ -47,6 +47,7 @@ function initCoinSizeConvert(currency) {
           }
           if (!coinSizeValue_) {
             if (minBet_ > 0) {
+              // @note minBet 為 0 是異常，略過
               coinSizeConvertMap.set(key_, [addCoinSizeValue_])
             } else {
               console.log(`key_: ${key_} minBet_: ${minBet_} 異常，略過...`)
@@ -142,7 +143,7 @@ function mainLoop(currency, agentCid) {
       allSql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','','${idListString_}',${defaultId_}) ON DUPLICATE KEY UPDATE premadeBetGoldIdList = '${idListString_}', defaultPremadeBetGoldId = ${defaultId_};`
     } else {
       if (v.minBet > 0) {
-        // minBet 為 0 是異常，略過...
+        // @note minBet 為 0 是異常，略過
         console.log(`k: ${k}, v: ${v.name} MinBet: ${v.minBet} 取不到 key_: ${key_}`)
       }
     }

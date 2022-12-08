@@ -46,7 +46,11 @@ function initCoinSizeConvert(currency) {
             CNY: cny_,
           }
           if (!coinSizeValue_) {
-            coinSizeConvertMap.set(key_, [addCoinSizeValue_])
+            if (minBet_ > 0) {
+              coinSizeConvertMap.set(key_, [addCoinSizeValue_])
+            } else {
+              console.log(`key_: ${key_} minBet_: ${minBet_} 異常，略過...`)
+            }
           } else {
             coinSizeValue_.push(addCoinSizeValue_)
           }
@@ -100,40 +104,48 @@ function mainLoop(currency, agentCid) {
   initCoinSizeConvert(currency)
 
   let sql_ = `use game;`
-  let allSql_ = ''
+  let allSql_ = ""
 
   //@note 重寫產 SQL 語法
   gameMinBetMap.forEach((v, k) => {
     const key_ = `${currency}-${v.minBet}`
     const valueCoinSizeList_ = coinSizeConvertMap.get(key_)
-    const idList_ = []
-    valueCoinSizeList_.forEach((value_) => {
-      const cal_ = calCoinSize(value_.coinSize, value_.minBet)
-      if (cal_) {
-        const keyBetGoldId_ = `${cal_.minBet}-${cal_.denomIndex}-${cal_.betLevel}`
-        const id_ = betGoldIdMap.get(keyBetGoldId_)
-        if (!id_) {
-          console.error(
-            `無法取得 id: ${id_} currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`
-          )
+    //
+    if (valueCoinSizeList_) {
+      const idList_ = []
+      valueCoinSizeList_.forEach((value_) => {
+        const cal_ = calCoinSize(value_.coinSize, value_.minBet)
+        if (cal_) {
+          const keyBetGoldId_ = `${cal_.minBet}-${cal_.denomIndex}-${cal_.betLevel}`
+          const id_ = betGoldIdMap.get(keyBetGoldId_)
+          if (!id_) {
+            console.error(
+              `無法取得 id: ${id_} currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`
+            )
+          } else {
+            //console.log(`minBet: ${value_.minBet} coinSize: ${value_.coinSize} id: ${id_}`)
+
+            idList_.push(id_)
+          }
         } else {
-          //console.log(`minBet: ${value_.minBet} coinSize: ${value_.coinSize} id: ${id_}`)
-
-          idList_.push(id_)
+          console.error(`🈲無法配對 currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`)
         }
-      } else {
-        console.error(`🈲無法配對 currency: ${currency}  minBet: ${value_.minBet}, coin size: ${value_.coinSize}`)
+      })
+
+      const idListString_ = convertListToDenomString(idList_)
+      const defaultId_ = idList_[1]
+
+      sql_ += `\n`
+      sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','','${idListString_}',${defaultId_}) ON DUPLICATE KEY UPDATE premadeBetGoldIdList = '${idListString_}', defaultPremadeBetGoldId = ${defaultId_};`
+
+      allSql_ += `\n`
+      allSql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','','${idListString_}',${defaultId_}) ON DUPLICATE KEY UPDATE premadeBetGoldIdList = '${idListString_}', defaultPremadeBetGoldId = ${defaultId_};`
+    } else {
+      if (v.minBet > 0) {
+        // minBet 為 0 是異常，略過...
+        console.log(`k: ${k}, v: ${v.name} MinBet: ${v.minBet} 取不到 key_: ${key_}`)
       }
-    })
-
-    const idListString_ = convertListToDenomString(idList_)
-    const defaultId_ = idList_[1]
-
-    sql_ += `\n`
-    sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','','${idListString_}',${defaultId_}) ON DUPLICATE KEY UPDATE premadeBetGoldIdList = '${idListString_}', defaultPremadeBetGoldId = ${defaultId_};`
-
-    allSql_ += `\n`
-    allSql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','','${idListString_}',${defaultId_}) ON DUPLICATE KEY UPDATE premadeBetGoldIdList = '${idListString_}', defaultPremadeBetGoldId = ${defaultId_};`
+    }
   })
 
   writeAlter("./output", sql_, `alter_${currency}.sql`)

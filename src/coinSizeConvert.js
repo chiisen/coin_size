@@ -13,6 +13,11 @@ const { gameMinBetMap } = require("./gameMinBet")
 
 const coinSizeConvertMap = new Map()
 
+const fishGameIdList = [
+  10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10011, 10012, 10014, 10081, 10082, 10083, 200531,
+  200532, 200533, 200534, 200535, 200536, 211201,
+]
+
 /**
  * 初始化 coin size 的設定表
  *
@@ -109,6 +114,8 @@ function mainLoop(currency, agentCid) {
 
   //@note 重寫產 SQL 語法
   gameMinBetMap.forEach((v, k) => {
+    if (fishGameIdList.includes(Number(v.gameId))) return
+    
     const key_ = `${currency}-${v.minBet}`
     const valueCoinSizeList_ = coinSizeConvertMap.get(key_)
     //
@@ -134,7 +141,13 @@ function mainLoop(currency, agentCid) {
       })
 
       const idListString_ = convertListToDenomString(idList_)
-      const defaultId_ = idList_[1]
+
+      let defaultId_
+      if (idList_.length >= 2) {
+        defaultId_ = idList_[1]
+      } else {
+        defaultId_ = idList_[0]
+      }
 
       sql_ += `\n`
       sql_ += `INSERT INTO game_denom_bet_gold_setting (cId,gameId,currency,groupKey,premadeBetGoldIdList,defaultPremadeBetGoldId) VALUES ('${agentCid}',${v.gameId},'${currency}','','${idListString_}',${defaultId_}) ON DUPLICATE KEY UPDATE premadeBetGoldIdList = '${idListString_}', defaultPremadeBetGoldId = ${defaultId_};`

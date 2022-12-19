@@ -28,7 +28,7 @@ initGameMinBet()
 
 //initSingleMinBet()
 
-//initCurrencyExchangeRate()
+initCurrencyExchangeRate()
 
 //initMaxDenom()
 

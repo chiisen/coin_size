@@ -1,4 +1,4 @@
-const BN = require("bignumber.js")
+const { Big: B } = require("big.js")
 const clc = require("cli-color")
 
 const { excel, helpers, data, file, convert } = require("58-toolkit")
@@ -53,26 +53,28 @@ function initCoinSizeConvert(currency) {
 
   coinSizeConvertMap.clear()
 
-  coinSizeConvertSheet_.forEach((row_) => {
+  coinSizeConvertSheet_.forEach((row_, index) => {
     let refIndex_ = 0
     const offset_ = 3
     minBetList.forEach((minBet_) => {
       const coinSizeOffSetIndex_ = refIndex_
       const cnyOffsetIndex_ = refIndex_ + 1
 
-      const coinSize_ = row_[coinSizeOffSetIndex_]
+      const coinSizeRow_ = row_[coinSizeOffSetIndex_]
+
       const cny_ = row_[cnyOffsetIndex_]
 
-      if (isNumber(coinSize_)) {
-        if (coinSize_ != 0) {
-          if (decimalPlacesLimit(coinSize_, 2)) {
-            console.error(`currency: ${currency} minBet: ${minBet_} coinSize: ${coinSize_} 小於小數點兩位`)
+      if (isNumber(coinSizeRow_)) {
+        const coinSizeNumber_ = new B(coinSizeRow_).round(4, 0).toNumber()
+        if (coinSizeNumber_ != 0) {
+          if (decimalPlacesLimit(coinSizeNumber_, 2)) {
+            console.error(`currency: ${currency} minBet: ${minBet_} coinSize: ${coinSizeNumber_} 小於小數點兩位`)
           }
           const key_ = `${currency}-${minBet_}`
           const coinSizeValue_ = coinSizeConvertMap.get(key_)
           const addCoinSizeValue_ = {
             minBet: minBet_,
-            coinSize: coinSize_,
+            coinSize: coinSizeNumber_,
             CNY: cny_,
           }
           if (!coinSizeValue_) {
@@ -102,11 +104,10 @@ function coinSizeConvertSQL() {
   const agentCid_ = `你指定的AgentCid`
   let allSql_ = `use game;`
   currencyList.forEach((curr_) => {
-    /*
     if (currencyNoCoinSize.includes(curr_)) {
-      console.warn(`排除幣別 ${curr_} 因為【無法配對】任何一組可用的coin szie設定`)
+      console.warn(`排除幣別 ${clc.yellow(curr_)} 因為【無法配對】任何一組可用的coin szie設定`)
       return
-    }*/
+    }
     const sql_ = mainLoop(curr_, agentCid_)
     allSql_ += sql_
   })
@@ -129,7 +130,7 @@ function calCoinSize(coinSize, minBet) {
         const denomString_ = denomIndexToDenomString(denomIndex_)
         const denomRatio_ = denomStringToDenomRatio(denomString_)
         if (denomRatio_ >= 0.01 /* @note denom必須大於等於 1:100 */) {
-          const calCoinSize_ = BN(minBet).times(denomRatio_).times(betLevel_).toNumber()
+          const calCoinSize_ = B(minBet).times(denomRatio_).times(betLevel_).toNumber()
           if (calCoinSize_ === coinSize) {
             ret_ = {
               minBet,
@@ -158,7 +159,7 @@ function reCalCoinSize(currency, minBet, oldCoinSize) {
       const denomString_ = denomIndexToDenomString(denomIndex_)
       const denomRatio_ = denomStringToDenomRatio(denomString_)
       if (denomRatio_ >= 0.01 /* @note denom必須大於等於 1:100 */) {
-        const calCoinSize_ = BN(minBet).times(denomRatio_).times(betLevel_).toNumber()
+        const calCoinSize_ = B(minBet).times(denomRatio_).times(betLevel_).toNumber()
 
         const cryDef_ = currencyExchangeRateMap.get(currency)
         if (cryDef_) {
@@ -231,12 +232,16 @@ function mainLoop(currency, agentCid) {
           const reCal_ = reCalCoinSize(currency, value_.minBet, value_.coinSize)
           if (reCal_) {
             console.log(
-              `✅重新計算 ❌coin size: ${value_.coinSize}, currency: ${currency},  minBet: ${value_.minBet}, gameId: ${v.gameId}`
+              `✅重新計算 ❌coin size: ${clc.whiteBright(value_.coinSize)}, currency: ${clc.yellow(
+                currency
+              )},  minBet: ${clc.yellow(value_.minBet)}, gameId: ${clc.yellow(v.gameId)}`
             )
             console.log(
-              `           🉑coin size: ${reCal_.coinSize}, betLevel: ${reCal_.betLevel}, denom: ${reCal_.denomString}/${
-                reCal_.denomIndex
-              }, CNY: ${reCal_.cny.toFixed(3)}`
+              `           🆗coin size: ${clc.green(reCal_.coinSize)}, betLevel: ${clc.yellow(
+                reCal_.betLevel
+              )}, denom: ${clc.yellow(reCal_.denomString)}/${clc.yellow(reCal_.denomIndex)}, CNY: ${clc.yellow(
+                reCal_.cny.toFixed(3)
+              )}`
             )
 
             const keyBetGoldId_ = `${reCal_.minBet}-${reCal_.denomIndex}-${reCal_.betLevel}`

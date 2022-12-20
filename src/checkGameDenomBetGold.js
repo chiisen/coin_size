@@ -1,4 +1,4 @@
-const BN = require("bignumber.js")
+const { Big: B } = require("big.js")
 
 const { data, file } = require("58-toolkit")
 const { minBetList, betLevelList, denomIndexList, denomIndexToDenomString, denomStringToDenomRatio } = data
@@ -19,7 +19,7 @@ function checkGameDenomBetGold() {
         if (!betGoldIdMap.get(key_)) {
           const denomString_ = denomIndexToDenomString(denomIndex_)
           const denomRatio_ = denomStringToDenomRatio(denomString_)
-          const betGold_ = BN(minBet_).times(denomRatio_).times(betLevel_).toNumber()
+          const betGold_ = B(minBet_).times(denomRatio_).times(betLevel_).toNumber()
           const data_ = {
             id: id_,
             minBet: minBet_,

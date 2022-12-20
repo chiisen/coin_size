@@ -4,7 +4,9 @@
   "description": "檢查 coin size 的 denom 是否在範圍內",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --config .prettierrc --write .",
+    "lint": "eslint . --ext .ts --ext .mts"
   },
   "repository": {
     "type": "git",
@@ -14,8 +16,12 @@
   "license": "MIT",
   "dependencies": {
     "58-toolkit": "^1.0.32",
+    "big.js": "^6.2.1",
     "bignumber.js": "^9.1.0",
     "cli-color": "^2.0.3",
     "node-xlsx": "^0.21.0"
+  },
+  "devDependencies": {
+    "@types/big.js": "^6.1.6"
   }
 }
